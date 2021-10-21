@@ -95,10 +95,18 @@ def tokenize_text():
     max_len_input = source_tensor.shape[1]
     max_len_target = target_tensor.shape[1]
 
-    print("[SOURCE] Japanese vocabulary size:  " + str(source_vocab_size))
-    print("[TARGET] English vocabulary size:  " + str(target_vocab_size))
-    print("[SOURCE] Max Japanese Sentence Length:  " + str(max_len_input))
-    print("[TARGET] Max English Sentence Length :  " + str(max_len_target))
+    #print("[SOURCE] Japanese vocabulary size:  " + str(source_vocab_size))
+    #print("[TARGET] English vocabulary size:  " + str(target_vocab_size))
+    #print("[SOURCE] Max Japanese Sentence Length:  " + str(max_len_input))
+    #print("[TARGET] Max English Sentence Length :  " + str(max_len_target))
+
+
+    input_tensor_train, input_tensor_test, target_tensor_train, target_tensor_test = train(source_tensor,target_tensor)
+
+
+    #print(len(input_tensor_train), len(target_tensor_train), len(input_tensor_test), len(target_tensor_test))
+
+
 
 
 def tokenize_helper(word):
@@ -107,9 +115,17 @@ def tokenize_helper(word):
     return word_tk, word_tk.texts_to_sequences(word)
 
 
+def train(s_tensor, t_tensor):
+    return train_test_split(s_tensor,t_tensor, test_size=0.2)
 
-
-
+def convert_ID_to_words(language, tensor):
+    ids = []
+    words = []
+    for t in tensor:
+        if t!= 0:
+            ids.append(t)
+            words.append(language.index_word[t])
+    return ids,words
 
 
 def analyze_jpn(sentence, mecab):
