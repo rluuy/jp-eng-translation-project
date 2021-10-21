@@ -8,12 +8,15 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from sklearn.model_selection import train_test_split
-
 import nltk
 import ssl
+import warnings
+warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
 
-jp_eng_file = "jpn.txt"
-cleaned_text = "cleaned_jp_en.txt"
+jp_eng_file = "jpn.txt"                            # Original input file. Contains JP -> Eng Translations
+cleaned_text = "cleaned_jp_en.txt"                 # Our new output file after cleaning
+lower_chars = [chr(i) for i in range (97,123)]     # all lower case english letters
+mecab = MeCab.Tagger("-Owakati")
 
 from nltk.translate.bleu_score import sentence_bleu
 from IPython.display import display
@@ -47,17 +50,15 @@ def clean_text():
     np.savetxt(cleaned_text, np_array, fmt="%s", encoding='utf-8')
     print(("[Created] {}".format(cleaned_text)))
 
-def tokenize_cleaned_text():
-    mecab = MeCab.Tagger("-Owakati")
+def tokenize_text():
     try:
         with open('cleaned_jp_en.txt', mode='rt', encoding='utf-8') as f:
             lines = f.read().split("\n")
     except FileNotFoundError:
         print("File does not exist. Abort Soldier.")
 
-    jpn_data = list()
-    en_data = list()
-    lower_chars = [chr(i) for i in range (97,123)]     # all lower case english letters
+    jpn_data = list()  # Holds our JP data while processing and tokenizing
+    en_data = list()  # Holds our EN data with processing and tokenizing
 
     for i in range (0, len(lines)):
         is_lower = False
@@ -74,12 +75,39 @@ def tokenize_cleaned_text():
     jpn_data = jpn_data[::-1]
     en_data = en_data[::-1]
 
-    print(len(jpn_data))
-    print(len(en_data))
+    #print(len(jpn_data))
+    #print(len(en_data))
 
     # Adds tag to Beginning of Sentence and End of Sentence
     for index, jpn_line in enumerate(jpn_data):
         jpn_data[index] = ["<bos>"] + jpn_line + ["<eos>"]
+
+    for index, en_line in enumerate(en_data):
+        en_data[index] = ["<bos>"] + en_line + ["<eos>"]
+
+    source_sentence_tokenizer, source_tensor = tokenize_helper(np.array(jpn_data))
+    target_sentence_tokenizer, target_tensor = tokenize_helper(np.array(en_data))
+    source_tensor = tf.keras.preprocessing.sequence.pad_sequences(source_tensor, padding='post')
+    target_tensor = tf.keras.preprocessing.sequence.pad_sequences(target_tensor, padding='post')
+
+    source_vocab_size = len(source_sentence_tokenizer.word_index) + 1
+    target_vocab_size = len(target_sentence_tokenizer.word_index) + 1
+    max_len_input = source_tensor.shape[1]
+    max_len_target = target_tensor.shape[1]
+
+    print("[SOURCE] Japanese vocabulary size:  " + str(source_vocab_size))
+    print("[TARGET] English vocabulary size:  " + str(target_vocab_size))
+    print("[SOURCE] Max Japanese Sentence Length:  " + str(max_len_input))
+    print("[TARGET] Max English Sentence Length :  " + str(max_len_target))
+
+
+def tokenize_helper(word):
+    word_tk = tf.keras.preprocessing.text.Tokenizer(filters='', char_level = False)
+    word_tk.fit_on_texts(word)
+    return word_tk, word_tk.texts_to_sequences(word)
+
+
+
 
 
 
@@ -104,6 +132,7 @@ def ntlk_checker():
 
 if __name__ == '__main__':
     #clean_text()
-    tokenize_cleaned_text()
+    tokenize_text()
+
 
 
